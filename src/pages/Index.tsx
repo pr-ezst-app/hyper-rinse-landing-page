@@ -30,8 +30,9 @@ const FAQS = [
   { q: "How much does a car wash cost?", a: "$15–$25 depending on the size of the car and what services you need." },
   { q: "How long does it take?", a: "Usually 15–20 minutes for a standard wash." },
   { q: "Do you clean all types of cars?", a: "Yes — including convertibles! We dust the hood and lightly wipe it down to keep it safe." },
-  { q: "What are your hours?", a: "Weekdays 3pm–6pm, Weekends 10am–5pm. Hours may vary for family events." },
-  { q: "Do you work on holidays?", a: "Yes! We work all holidays except Christmas, Thanksgiving, and Halloween." },
+  { q: "What are your hours?", a: "Weekdays: 3pm – 6pm. Weekends: 10am – 5pm. Hours may vary around family events." },
+  { q: "Do you work on holidays?", a: "We work early on Christmas, Thanksgiving, and Halloween — morning hours only on those days. All other holidays we work our regular hours." },
+  { q: "What area do you serve?", a: "We currently serve the North York and East York areas only. If you're unsure whether we cover your street, feel free to reach out and ask!" },
   { q: "What other services do you offer?", a: "We also shovel driveways ($15–$30) in winter and rake/bag leaves ($20–$80) in fall." },
 ];
 
@@ -432,8 +433,57 @@ export default function Index() {
         </div>
       </section>
 
+      {/* HOURS + AREA BANNER */}
+      <section className="py-16 px-6 md:px-12">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-4">
+            {/* Weekday hours */}
+            <div className="bg-cyan-400/10 border border-cyan-400/30 rounded-2xl p-6 flex items-start gap-4">
+              <div className="w-10 h-10 rounded-xl bg-cyan-400/20 flex items-center justify-center shrink-0 mt-0.5">
+                <Icon name="Clock" size={20} className="text-cyan-400" />
+              </div>
+              <div>
+                <p className="font-rajdhani font-bold text-lg text-white">Weekdays</p>
+                <p className="text-cyan-400 font-rajdhani font-bold text-2xl">3:00 PM – 6:00 PM</p>
+                <p className="text-white/40 text-xs mt-1">Mon – Fri (after school)</p>
+              </div>
+            </div>
+            {/* Weekend hours */}
+            <div className="bg-cyan-400/10 border border-cyan-400/30 rounded-2xl p-6 flex items-start gap-4">
+              <div className="w-10 h-10 rounded-xl bg-cyan-400/20 flex items-center justify-center shrink-0 mt-0.5">
+                <Icon name="Sun" size={20} className="text-cyan-400" />
+              </div>
+              <div>
+                <p className="font-rajdhani font-bold text-lg text-white">Weekends</p>
+                <p className="text-cyan-400 font-rajdhani font-bold text-2xl">10:00 AM – 5:00 PM</p>
+                <p className="text-white/40 text-xs mt-1">Sat & Sun · Early mornings on holidays</p>
+              </div>
+            </div>
+            {/* Service area */}
+            <div className="bg-cyan-400/10 border border-cyan-400/30 rounded-2xl p-6 flex items-start gap-4">
+              <div className="w-10 h-10 rounded-xl bg-cyan-400/20 flex items-center justify-center shrink-0 mt-0.5">
+                <Icon name="MapPin" size={20} className="text-cyan-400" />
+              </div>
+              <div>
+                <p className="font-rajdhani font-bold text-lg text-white">Service Area</p>
+                <p className="text-cyan-400 font-rajdhani font-bold text-2xl">North & East York</p>
+                <p className="text-white/40 text-xs mt-1">Toronto, ON · Not sure? Just ask us!</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Holiday notice */}
+          <div className="mt-4 bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 flex items-center gap-3">
+            <Icon name="Info" size={16} className="text-white/40 shrink-0" />
+            <p className="text-white/40 text-sm">
+              <span className="text-white/70 font-semibold">Holiday hours:</span> We work <span className="text-white/70">morning only</span> on Christmas, Thanksgiving, and Halloween — but we're off later in the day on those holidays. All other holidays: regular hours.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* CONTACT */}
-      <section id="contact" className="py-24 px-6 md:px-12">
+      <section id="contact" className="py-12 px-6 md:px-12">
         <div className="max-w-2xl mx-auto text-center">
           <span className="text-cyan-400 text-sm tracking-widest uppercase font-rajdhani font-semibold">Get In Touch</span>
           <h2 className="font-rajdhani font-bold text-5xl md:text-6xl mt-2 mb-4 uppercase">Book A Wash</h2>
@@ -470,10 +520,6 @@ export default function Index() {
                 SEND MESSAGE
               </button>
             </div>
-          </div>
-          <div className="flex items-center justify-center gap-2 mt-6 text-white/30 text-sm">
-            <Icon name="Clock" size={14} />
-            Weekdays 3–6pm · Weekends 10am–5pm
           </div>
         </div>
       </section>
