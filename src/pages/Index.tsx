@@ -15,7 +15,7 @@ const SERVICES = [
 
 const PRICING = [
   { title: "Car Wash", price: "$15 – $25", note: "Based on car size & options", icon: "Car", color: "from-cyan-500 to-blue-600", items: ["Hand wash with clean rags", "Premium soap", "All car types including convertibles", "15–20 min turnaround"] },
-  { title: "Driveway Shoveling", price: "$15 – $30", note: "Based on driveway size", icon: "Snowflake", color: "from-blue-400 to-indigo-600", items: ["Full driveway cleared", "Winter season only", "Fast & reliable", "Available holidays"] },
+  { title: "Driveway Shoveling", price: "$15 – $30", note: "Based on driveway size", icon: "Snowflake", color: "from-blue-400 to-indigo-600", items: ["Full driveway cleared", "Winter season only", "Fast & reliable", "Available on holidays (morning only on Thanksgiving & Halloween · closed Christmas)"] },
   { title: "Leaf Raking", price: "$20 – $80", note: "Front/back + leaf blower = upper range", icon: "Leaf", color: "from-emerald-400 to-cyan-600", items: ["Raking & bagging included", "Front or back yard", "Leaf blower available", "Fall season"] },
 ];
 
