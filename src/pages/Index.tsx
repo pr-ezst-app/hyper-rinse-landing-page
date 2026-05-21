@@ -1,59 +1,22 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Icon from "@/components/ui/icon";
 
 const HERO_IMG = "https://cdn.ezst.app/projects/7f639b95-226a-422d-926f-c7952b4a8849/files/904fec01-d27f-465e-b101-5da967fc5302.jpg";
+const API = "https://functions.poehali.dev/72d86ca5-8649-41e0-a67c-43254b3c1665";
+const PAGE_SIZE = 3;
 
 const NAV_LINKS = ["Home", "Services", "Pricing", "Team", "Reviews", "FAQ", "Contact"];
 
 const SERVICES = [
-  {
-    icon: "Droplets",
-    title: "Full Car Wash",
-    value: "wash",
-    desc: "Exterior wash with clean rags, premium soap, and careful hand technique — every panel spotless.",
-    tag: "Most Popular",
-  },
-  {
-    icon: "Snowflake",
-    title: "Driveway Shoveling",
-    value: "shovel",
-    desc: "Winter driveway cleared fast and efficiently. We handle the snow so you don't have to.",
-    tag: "Seasonal",
-  },
-  {
-    icon: "Leaf",
-    title: "Leaf Raking & Bagging",
-    value: "leaves",
-    desc: "Full yard leaf cleanup — front, back, with leaf blower available for larger jobs.",
-    tag: "Seasonal",
-  },
+  { icon: "Droplets", title: "Full Car Wash", value: "wash", desc: "Exterior wash with clean rags, premium soap, and careful hand technique — every panel spotless.", tag: "Most Popular" },
+  { icon: "Snowflake", title: "Driveway Shoveling", value: "shovel", desc: "Winter driveway cleared fast and efficiently. We handle the snow so you don't have to.", tag: "Seasonal" },
+  { icon: "Leaf", title: "Leaf Raking & Bagging", value: "leaves", desc: "Full yard leaf cleanup — front, back, with leaf blower available for larger jobs.", tag: "Seasonal" },
 ];
 
 const PRICING = [
-  {
-    title: "Car Wash",
-    price: "$15 – $25",
-    note: "Based on car size & options",
-    icon: "Car",
-    color: "from-cyan-500 to-blue-600",
-    items: ["Hand wash with clean rags", "Premium soap", "All car types including convertibles", "15–20 min turnaround"],
-  },
-  {
-    title: "Driveway Shoveling",
-    price: "$15 – $30",
-    note: "Based on driveway size",
-    icon: "Snowflake",
-    color: "from-blue-400 to-indigo-600",
-    items: ["Full driveway cleared", "Winter season only", "Fast & reliable", "Available holidays"],
-  },
-  {
-    title: "Leaf Raking",
-    price: "$20 – $80",
-    note: "Front/back + leaf blower = upper range",
-    icon: "Leaf",
-    color: "from-emerald-400 to-cyan-600",
-    items: ["Raking & bagging included", "Front or back yard", "Leaf blower available", "Fall season"],
-  },
+  { title: "Car Wash", price: "$15 – $25", note: "Based on car size & options", icon: "Car", color: "from-cyan-500 to-blue-600", items: ["Hand wash with clean rags", "Premium soap", "All car types including convertibles", "15–20 min turnaround"] },
+  { title: "Driveway Shoveling", price: "$15 – $30", note: "Based on driveway size", icon: "Snowflake", color: "from-blue-400 to-indigo-600", items: ["Full driveway cleared", "Winter season only", "Fast & reliable", "Available holidays"] },
+  { title: "Leaf Raking", price: "$20 – $80", note: "Front/back + leaf blower = upper range", icon: "Leaf", color: "from-emerald-400 to-cyan-600", items: ["Raking & bagging included", "Front or back yard", "Leaf blower available", "Fall season"] },
 ];
 
 const TEAM = [
@@ -72,21 +35,14 @@ const FAQS = [
   { q: "What other services do you offer?", a: "We also shovel driveways ($15–$30) in winter and rake/bag leaves ($20–$80) in fall." },
 ];
 
-
+type Review = { id: number; name: string; stars: number; service: string; text: string; date: string };
 
 function StarPicker({ value, onChange }: { value: number; onChange: (n: number) => void }) {
   const [hover, setHover] = useState(0);
   return (
     <div className="flex gap-1">
       {[1, 2, 3, 4, 5].map((n) => (
-        <button
-          key={n}
-          type="button"
-          onClick={() => onChange(n)}
-          onMouseEnter={() => setHover(n)}
-          onMouseLeave={() => setHover(0)}
-          className="text-2xl transition-transform hover:scale-125"
-        >
+        <button key={n} type="button" onClick={() => onChange(n)} onMouseEnter={() => setHover(n)} onMouseLeave={() => setHover(0)} className="text-2xl transition-transform hover:scale-125">
           <span className={(hover || value) >= n ? "text-cyan-400" : "text-white/20"}>★</span>
         </button>
       ))}
@@ -94,7 +50,7 @@ function StarPicker({ value, onChange }: { value: number; onChange: (n: number) 
   );
 }
 
-function ReviewCard({ review }: { review: typeof SEED_REVIEWS[0] }) {
+function ReviewCard({ review }: { review: Review }) {
   return (
     <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-6 hover:border-cyan-400/20 transition-all duration-300 flex flex-col gap-3">
       <div className="flex items-center justify-between">
@@ -120,13 +76,33 @@ export default function Index() {
   const [selectedService, setSelectedService] = useState("");
 
   // Reviews state
-  type Review = { name: string; stars: number; service: string; text: string; date: string };
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [total, setTotal] = useState(0);
+  const [avg, setAvg] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
+
+  // Submit form state
   const [newStars, setNewStars] = useState(0);
   const [newName, setNewName] = useState("");
   const [newService, setNewService] = useState("");
   const [newText, setNewText] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+
+  const fetchReviews = useCallback(async (offset: number, append = false) => {
+    if (offset === 0) setInitialLoading(true);
+    else setLoadingMore(true);
+    const res = await fetch(`${API}?offset=${offset}&limit=${PAGE_SIZE}`);
+    const data = await res.json();
+    setTotal(data.total);
+    setAvg(data.avg);
+    setReviews((prev) => append ? [...prev, ...data.reviews] : data.reviews);
+    setInitialLoading(false);
+    setLoadingMore(false);
+  }, []);
+
+  useEffect(() => { fetchReviews(0); }, [fetchReviews]);
 
   const scrollTo = (id: string) => {
     setMenuOpen(false);
@@ -138,24 +114,30 @@ export default function Index() {
     scrollTo("contact");
   };
 
-  const avgStars = (reviews.reduce((a, r) => a + r.stars, 0) / reviews.length).toFixed(1);
+  const handleLoadMore = () => {
+    fetchReviews(reviews.length, true);
+  };
 
-  const handleReviewSubmit = (e: React.FormEvent) => {
+  const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newStars || !newName.trim() || !newText.trim()) return;
-    const now = new Date();
-    const month = now.toLocaleString("default", { month: "short" });
-    setReviews([
-      { name: newName.trim(), stars: newStars, service: newService || "General", text: newText.trim(), date: `${month} ${now.getFullYear()}` },
-      ...reviews,
-    ]);
+    setSubmitting(true);
+    await fetch(API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: newName.trim(), stars: newStars, service: newService || "General", text: newText.trim() }),
+    });
+    setSubmitting(false);
     setNewStars(0);
     setNewName("");
     setNewService("");
     setNewText("");
     setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 3000);
+    fetchReviews(0);
+    setTimeout(() => setSubmitted(false), 4000);
   };
+
+  const hasMore = reviews.length < total;
 
   return (
     <div className="min-h-screen bg-[#050A14] text-white font-dm overflow-x-hidden">
@@ -167,11 +149,7 @@ export default function Index() {
         </span>
         <div className="hidden md:flex items-center gap-8">
           {NAV_LINKS.map((l) => (
-            <button
-              key={l}
-              onClick={() => scrollTo(l.toLowerCase())}
-              className="text-sm text-white/60 hover:text-cyan-400 transition-colors duration-200 tracking-wide"
-            >
+            <button key={l} onClick={() => scrollTo(l.toLowerCase())} className="text-sm text-white/60 hover:text-cyan-400 transition-colors duration-200 tracking-wide">
               {l}
             </button>
           ))}
@@ -185,9 +163,7 @@ export default function Index() {
       {menuOpen && (
         <div className="fixed inset-0 z-40 bg-[#050A14]/98 flex flex-col items-center justify-center gap-8 md:hidden">
           {NAV_LINKS.map((l) => (
-            <button key={l} onClick={() => scrollTo(l.toLowerCase())} className="font-rajdhani text-3xl font-bold text-white/80 hover:text-cyan-400 transition-colors">
-              {l}
-            </button>
+            <button key={l} onClick={() => scrollTo(l.toLowerCase())} className="font-rajdhani text-3xl font-bold text-white/80 hover:text-cyan-400 transition-colors">{l}</button>
           ))}
         </div>
       )}
@@ -213,17 +189,10 @@ export default function Index() {
             Professional hand car wash delivered right to your driveway. Fast, affordable, and done right — every time.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <button
-              onClick={() => scrollTo("contact")}
-              className="group flex items-center gap-2 bg-cyan-400 hover:bg-cyan-300 text-[#050A14] font-rajdhani font-bold text-lg tracking-widest px-8 py-4 rounded-full transition-all duration-300 hover:shadow-[0_0_40px_rgba(34,211,238,0.4)]"
-            >
-              BOOK A WASH
-              <Icon name="ArrowRight" size={18} />
+            <button onClick={() => scrollTo("contact")} className="group flex items-center gap-2 bg-cyan-400 hover:bg-cyan-300 text-[#050A14] font-rajdhani font-bold text-lg tracking-widest px-8 py-4 rounded-full transition-all duration-300 hover:shadow-[0_0_40px_rgba(34,211,238,0.4)]">
+              BOOK A WASH <Icon name="ArrowRight" size={18} />
             </button>
-            <button
-              onClick={() => scrollTo("services")}
-              className="flex items-center gap-2 border border-white/20 hover:border-cyan-400/50 text-white/70 hover:text-white font-rajdhani font-semibold tracking-widest px-8 py-4 rounded-full transition-all duration-300"
-            >
+            <button onClick={() => scrollTo("services")} className="flex items-center gap-2 border border-white/20 hover:border-cyan-400/50 text-white/70 hover:text-white font-rajdhani font-semibold tracking-widest px-8 py-4 rounded-full transition-all duration-300">
               OUR SERVICES
             </button>
           </div>
@@ -250,11 +219,7 @@ export default function Index() {
         </div>
         <div className="grid md:grid-cols-3 gap-6">
           {SERVICES.map((s) => (
-            <button
-              key={s.title}
-              onClick={() => handleServiceClick(s.value)}
-              className="group relative bg-white/[0.03] border border-white/10 rounded-2xl p-8 hover:border-cyan-400/40 hover:bg-cyan-400/5 transition-all duration-300 text-left cursor-pointer"
-            >
+            <button key={s.title} onClick={() => handleServiceClick(s.value)} className="group relative bg-white/[0.03] border border-white/10 rounded-2xl p-8 hover:border-cyan-400/40 hover:bg-cyan-400/5 transition-all duration-300 text-left cursor-pointer">
               <div className="absolute top-4 right-4">
                 <span className="text-xs bg-cyan-400/10 text-cyan-400 border border-cyan-400/20 px-2 py-0.5 rounded-full">{s.tag}</span>
               </div>
@@ -309,8 +274,7 @@ export default function Index() {
               <ul className="space-y-3 mt-auto">
                 {p.items.map((item) => (
                   <li key={item} className="flex items-center gap-2 text-white/60 text-sm">
-                    <Icon name="Check" size={14} className="text-cyan-400 shrink-0" />
-                    {item}
+                    <Icon name="Check" size={14} className="text-cyan-400 shrink-0" />{item}
                   </li>
                 ))}
               </ul>
@@ -351,24 +315,50 @@ export default function Index() {
           <div className="text-center mb-16">
             <span className="text-cyan-400 text-sm tracking-widest uppercase font-rajdhani font-semibold">Customer Feedback</span>
             <h2 className="font-rajdhani font-bold text-5xl md:text-6xl mt-2 uppercase">Reviews</h2>
-            {reviews.length > 0 && (
+            {total > 0 && (
               <div className="flex items-center justify-center gap-3 mt-4">
                 <div className="flex gap-0.5">
                   {[1,2,3,4,5].map((n) => (
-                    <span key={n} className={`text-xl ${n <= Math.round(Number(avgStars)) ? "text-cyan-400" : "text-white/15"}`}>★</span>
+                    <span key={n} className={`text-xl ${n <= Math.round(avg) ? "text-cyan-400" : "text-white/15"}`}>★</span>
                   ))}
                 </div>
-                <span className="font-rajdhani font-bold text-2xl text-cyan-400">{avgStars}</span>
-                <span className="text-white/30 text-sm">({reviews.length} {reviews.length === 1 ? "review" : "reviews"})</span>
+                <span className="font-rajdhani font-bold text-2xl text-cyan-400">{avg.toFixed(1)}</span>
+                <span className="text-white/30 text-sm">({total} {total === 1 ? "review" : "reviews"})</span>
               </div>
             )}
           </div>
 
           {/* Review cards */}
-          {reviews.length > 0 ? (
+          {initialLoading ? (
             <div className="grid md:grid-cols-3 gap-6 mb-14">
-              {reviews.map((r, i) => <ReviewCard key={i} review={r} />)}
+              {[1,2,3].map((i) => (
+                <div key={i} className="bg-white/[0.03] border border-white/10 rounded-2xl p-6 h-44 animate-pulse" />
+              ))}
             </div>
+          ) : reviews.length > 0 ? (
+            <>
+              <div className="grid md:grid-cols-3 gap-6 mb-8">
+                {reviews.map((r) => <ReviewCard key={r.id} review={r} />)}
+              </div>
+              {hasMore && (
+                <div className="flex justify-center mb-14">
+                  <button
+                    onClick={handleLoadMore}
+                    disabled={loadingMore}
+                    className="flex items-center gap-2 border border-white/20 hover:border-cyan-400/50 text-white/60 hover:text-cyan-400 font-rajdhani font-semibold tracking-widest px-8 py-3 rounded-full transition-all duration-300 disabled:opacity-40"
+                  >
+                    {loadingMore ? (
+                      <><Icon name="Loader" size={16} className="animate-spin" /> Loading...</>
+                    ) : (
+                      <><Icon name="ChevronDown" size={16} /> View More Reviews ({total - reviews.length} remaining)</>
+                    )}
+                  </button>
+                </div>
+              )}
+              {!hasMore && reviews.length > PAGE_SIZE && (
+                <p className="text-center text-white/20 text-sm mb-14">You've seen all {total} reviews</p>
+              )}
+            </>
           ) : (
             <div className="flex flex-col items-center justify-center py-16 mb-14 border border-dashed border-white/10 rounded-2xl gap-4 text-center">
               <div className="text-5xl">💬</div>
@@ -381,7 +371,6 @@ export default function Index() {
           <div className="max-w-2xl mx-auto bg-white/[0.03] border border-white/10 rounded-2xl p-8 md:p-10">
             <h3 className="font-rajdhani font-bold text-2xl mb-1">Leave a Review</h3>
             <p className="text-white/40 text-sm mb-6">Worked with us? We'd love to hear what you think.</p>
-
             {submitted ? (
               <div className="flex flex-col items-center justify-center py-10 gap-3 text-center">
                 <div className="text-5xl">🎉</div>
@@ -397,21 +386,11 @@ export default function Index() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-white/40 text-xs tracking-widest uppercase mb-2 block">Your Name</label>
-                    <input
-                      type="text"
-                      value={newName}
-                      onChange={(e) => setNewName(e.target.value)}
-                      placeholder="Jane D."
-                      className="w-full bg-white/[0.05] border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/20 focus:outline-none focus:border-cyan-400/50 transition-colors"
-                    />
+                    <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Jane D." className="w-full bg-white/[0.05] border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/20 focus:outline-none focus:border-cyan-400/50 transition-colors" />
                   </div>
                   <div>
                     <label className="text-white/40 text-xs tracking-widest uppercase mb-2 block">Service Used</label>
-                    <select
-                      value={newService}
-                      onChange={(e) => setNewService(e.target.value)}
-                      className="w-full bg-[#050A14] border border-white/10 rounded-xl px-4 py-3 text-white/60 focus:outline-none focus:border-cyan-400/50 transition-colors"
-                    >
+                    <select value={newService} onChange={(e) => setNewService(e.target.value)} className="w-full bg-[#050A14] border border-white/10 rounded-xl px-4 py-3 text-white/60 focus:outline-none focus:border-cyan-400/50 transition-colors">
                       <option value="">Select...</option>
                       <option value="Car Wash">Car Wash</option>
                       <option value="Driveway Shoveling">Driveway Shoveling</option>
@@ -421,20 +400,10 @@ export default function Index() {
                 </div>
                 <div>
                   <label className="text-white/40 text-xs tracking-widest uppercase mb-2 block">Your Review</label>
-                  <textarea
-                    rows={3}
-                    value={newText}
-                    onChange={(e) => setNewText(e.target.value)}
-                    placeholder="Tell us about your experience..."
-                    className="w-full bg-white/[0.05] border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/20 focus:outline-none focus:border-cyan-400/50 transition-colors resize-none"
-                  />
+                  <textarea rows={3} value={newText} onChange={(e) => setNewText(e.target.value)} placeholder="Tell us about your experience..." className="w-full bg-white/[0.05] border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/20 focus:outline-none focus:border-cyan-400/50 transition-colors resize-none" />
                 </div>
-                <button
-                  type="submit"
-                  disabled={!newStars || !newName.trim() || !newText.trim()}
-                  className="w-full bg-cyan-400 hover:bg-cyan-300 disabled:opacity-30 disabled:cursor-not-allowed text-[#050A14] font-rajdhani font-bold text-lg tracking-widest py-4 rounded-xl transition-all duration-300 hover:shadow-[0_0_30px_rgba(34,211,238,0.3)]"
-                >
-                  SUBMIT REVIEW
+                <button type="submit" disabled={!newStars || !newName.trim() || !newText.trim() || submitting} className="w-full bg-cyan-400 hover:bg-cyan-300 disabled:opacity-30 disabled:cursor-not-allowed text-[#050A14] font-rajdhani font-bold text-lg tracking-widest py-4 rounded-xl transition-all duration-300 hover:shadow-[0_0_30px_rgba(34,211,238,0.3)] flex items-center justify-center gap-2">
+                  {submitting ? <><Icon name="Loader" size={18} className="animate-spin" /> Submitting...</> : "SUBMIT REVIEW"}
                 </button>
               </form>
             )}
@@ -469,7 +438,6 @@ export default function Index() {
           <span className="text-cyan-400 text-sm tracking-widest uppercase font-rajdhani font-semibold">Get In Touch</span>
           <h2 className="font-rajdhani font-bold text-5xl md:text-6xl mt-2 mb-4 uppercase">Book A Wash</h2>
           <p className="text-white/40 mb-10">Send us a message and we'll get back to you to schedule your wash. We come right to your door!</p>
-
           <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-8 md:p-10 text-left">
             <div className="space-y-4">
               <div>
@@ -482,11 +450,7 @@ export default function Index() {
               </div>
               <div>
                 <label className="text-white/40 text-xs tracking-widest uppercase mb-2 block">Service Needed</label>
-                <select
-                  value={selectedService}
-                  onChange={(e) => setSelectedService(e.target.value)}
-                  className="w-full bg-[#050A14] border border-white/10 rounded-xl px-4 py-3 text-white/60 focus:outline-none focus:border-cyan-400/50 transition-colors"
-                >
+                <select value={selectedService} onChange={(e) => setSelectedService(e.target.value)} className="w-full bg-[#050A14] border border-white/10 rounded-xl px-4 py-3 text-white/60 focus:outline-none focus:border-cyan-400/50 transition-colors">
                   <option value="">Select a service...</option>
                   <option value="wash">Car Wash ($15–$25)</option>
                   <option value="shovel">Driveway Shoveling ($15–$30)</option>
@@ -517,9 +481,7 @@ export default function Index() {
       {/* FOOTER */}
       <footer className="border-t border-white/5 py-10 px-6 md:px-12">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <span className="font-rajdhani font-bold text-xl tracking-widest">
-            HYPER<span className="text-cyan-400">RINSE</span>
-          </span>
+          <span className="font-rajdhani font-bold text-xl tracking-widest">HYPER<span className="text-cyan-400">RINSE</span></span>
           <p className="text-white/20 text-sm text-center">© 2025 HyperRinse · Door-to-door car washing · All rights reserved</p>
           <div className="flex items-center gap-2 text-white/30 text-sm">
             <Icon name="Sparkles" size={14} className="text-cyan-400" />
