@@ -178,9 +178,16 @@ export default function Index() {
         <div className="absolute bottom-1/3 right-1/4 w-72 h-72 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 text-center px-6 max-w-5xl mx-auto">
-          <div className="inline-flex items-center gap-2 bg-cyan-400/10 border border-cyan-400/20 rounded-full px-4 py-1.5 mb-6 text-cyan-400 text-sm tracking-wide">
-            <Icon name="MapPin" size={14} />
-            Door-to-door service — we come to you
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 mb-6">
+            <div className="inline-flex items-center gap-2 bg-cyan-400/10 border border-cyan-400/20 rounded-full px-4 py-1.5 text-cyan-400 text-sm tracking-wide">
+              <Icon name="MapPin" size={14} />
+              We come to you
+            </div>
+            <span className="text-white/30 text-sm hidden sm:block">or</span>
+            <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-1.5 text-white/50 text-sm tracking-wide">
+              <Icon name="Navigation" size={14} />
+              You can come to us too
+            </div>
           </div>
           <h1 className="font-rajdhani font-bold text-6xl md:text-8xl lg:text-9xl leading-none tracking-tight mb-6 uppercase">
             Your Car,{" "}
@@ -247,11 +254,15 @@ export default function Index() {
               <span className="text-sm tracking-widest uppercase font-rajdhani font-semibold">Our Goal</span>
             </div>
             <h3 className="font-rajdhani font-bold text-4xl md:text-5xl mb-4 leading-tight uppercase">
-              Saving Up For A <span className="text-cyan-400">Pressure Washer</span>
+              Upgrading Our <span className="text-cyan-400">Equipment</span>
             </h3>
-            <p className="text-white/50 leading-relaxed">
-              Right now we use buckets of soap and clean rags — and we do a great job! But our goal is to get a car-safe pressure washer, which will make every wash <strong className="text-white/80">2× faster and 2× cleaner</strong>. Once we hit that milestone, we'll expand our services even further.
+            <p className="text-white/50 leading-relaxed mb-4">
+              Right now we use buckets of soap and clean rags — and we do a great job! But we're saving up to upgrade our setup with two big goals:
             </p>
+            <ul className="space-y-2 text-white/50">
+              <li className="flex items-start gap-2"><Icon name="Zap" size={15} className="text-cyan-400 mt-0.5 shrink-0" /><span>A <strong className="text-white/80">car-safe pressure washer</strong> — making every wash 2× faster and 2× cleaner</span></li>
+              <li className="flex items-start gap-2"><Icon name="ShoppingCart" size={15} className="text-cyan-400 mt-0.5 shrink-0" /><span>A <strong className="text-white/80">wagon</strong> to haul all our gear between jobs — no more lugging buckets by hand</span></li>
+            </ul>
           </div>
         </div>
       </section>
@@ -511,6 +522,15 @@ export default function Index() {
                     <Icon name="CheckCircle" size={12} /> Pre-selected from your service choice
                   </p>
                 )}
+              </div>
+              <div>
+                <label className="text-white/40 text-xs tracking-widest uppercase mb-2 block">Do you have a hose?</label>
+                <select className="w-full bg-[#050A14] border border-white/10 rounded-xl px-4 py-3 text-white/60 focus:outline-none focus:border-cyan-400/50 transition-colors">
+                  <option value="">Select...</option>
+                  <option value="yes">Yes, I have a hose</option>
+                  <option value="no">No, I don't have a hose</option>
+                </select>
+                <p className="text-white/25 text-xs mt-1.5">Helps us plan — we bring our own water either way!</p>
               </div>
               <div>
                 <label className="text-white/40 text-xs tracking-widest uppercase mb-2 block">Message (optional)</label>
