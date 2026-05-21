@@ -72,11 +72,7 @@ const FAQS = [
   { q: "What other services do you offer?", a: "We also shovel driveways ($15–$30) in winter and rake/bag leaves ($20–$80) in fall." },
 ];
 
-const SEED_REVIEWS = [
-  { name: "Marcus T.", stars: 5, service: "Car Wash", text: "These guys did an amazing job on my truck. Looked brand new after 20 minutes. Will definitely call again!", date: "May 2025" },
-  { name: "Sarah L.", stars: 5, service: "Leaf Raking", text: "Cleared my entire backyard in under an hour. Super polite and thorough. Highly recommend!", date: "Oct 2024" },
-  { name: "David K.", stars: 4, service: "Car Wash", text: "Great service for the price. My car looked spotless. Would be 5 stars with a pressure washer!", date: "Apr 2025" },
-];
+
 
 function StarPicker({ value, onChange }: { value: number; onChange: (n: number) => void }) {
   const [hover, setHover] = useState(0);
@@ -124,7 +120,8 @@ export default function Index() {
   const [selectedService, setSelectedService] = useState("");
 
   // Reviews state
-  const [reviews, setReviews] = useState(SEED_REVIEWS);
+  type Review = { name: string; stars: number; service: string; text: string; date: string };
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [newStars, setNewStars] = useState(0);
   const [newName, setNewName] = useState("");
   const [newService, setNewService] = useState("");
@@ -354,21 +351,31 @@ export default function Index() {
           <div className="text-center mb-16">
             <span className="text-cyan-400 text-sm tracking-widest uppercase font-rajdhani font-semibold">Customer Feedback</span>
             <h2 className="font-rajdhani font-bold text-5xl md:text-6xl mt-2 uppercase">Reviews</h2>
-            <div className="flex items-center justify-center gap-3 mt-4">
-              <div className="flex gap-0.5">
-                {[1,2,3,4,5].map((n) => (
-                  <span key={n} className={`text-xl ${n <= Math.round(Number(avgStars)) ? "text-cyan-400" : "text-white/15"}`}>★</span>
-                ))}
+            {reviews.length > 0 && (
+              <div className="flex items-center justify-center gap-3 mt-4">
+                <div className="flex gap-0.5">
+                  {[1,2,3,4,5].map((n) => (
+                    <span key={n} className={`text-xl ${n <= Math.round(Number(avgStars)) ? "text-cyan-400" : "text-white/15"}`}>★</span>
+                  ))}
+                </div>
+                <span className="font-rajdhani font-bold text-2xl text-cyan-400">{avgStars}</span>
+                <span className="text-white/30 text-sm">({reviews.length} {reviews.length === 1 ? "review" : "reviews"})</span>
               </div>
-              <span className="font-rajdhani font-bold text-2xl text-cyan-400">{avgStars}</span>
-              <span className="text-white/30 text-sm">({reviews.length} reviews)</span>
-            </div>
+            )}
           </div>
 
           {/* Review cards */}
-          <div className="grid md:grid-cols-3 gap-6 mb-14">
-            {reviews.map((r, i) => <ReviewCard key={i} review={r} />)}
-          </div>
+          {reviews.length > 0 ? (
+            <div className="grid md:grid-cols-3 gap-6 mb-14">
+              {reviews.map((r, i) => <ReviewCard key={i} review={r} />)}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-16 mb-14 border border-dashed border-white/10 rounded-2xl gap-4 text-center">
+              <div className="text-5xl">💬</div>
+              <p className="font-rajdhani font-bold text-xl text-white/50">No reviews yet</p>
+              <p className="text-white/25 text-sm max-w-xs">Be the first to share your experience with HyperRinse!</p>
+            </div>
+          )}
 
           {/* Leave a review form */}
           <div className="max-w-2xl mx-auto bg-white/[0.03] border border-white/10 rounded-2xl p-8 md:p-10">
